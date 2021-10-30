@@ -99,6 +99,7 @@ enum CodeKind {
     CODE_YYACCEPT,
     CODE_VAR,
     CODE_STMT,
+    CODE_LOOP,
     CODE_TEXT,
     CODE_TEXT_RAW,
     CODE_RAW,

@@ -524,6 +524,9 @@ void expand_pass_1(CodegenCtxPass1 &ctx, Code *code)
                 expand_pass_1_list(ctx, x->body);
             }
             break;
+        case CODE_LOOP:
+            expand_pass_1_list(ctx, code->loop.body);
+            break;
         case CODE_STAGS:
         case CODE_MTAGS:
             expand_tags_directive(ctx, code);
@@ -617,6 +620,9 @@ void expand_pass_2(CodegenCtxPass2 &ctx, Code *code)
             for (CodeCase *x = code->swch.cases->head; x; x = x->next) {
                 expand_pass_2_list(ctx, x->body);
             }
+            break;
+        case CODE_LOOP:
+            expand_pass_2_list(ctx, code->loop.body);
             break;
         case CODE_LABEL:
             gen_label(ctx.scratchbuf, ctx.opts, code);

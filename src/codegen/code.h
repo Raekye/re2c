@@ -303,6 +303,11 @@ struct CodeLabel {
     };
 };
 
+struct CodeLoop {
+    const char *label;
+    CodeList   *body;
+};
+
 struct Code {
     union {
         const char    *text;
@@ -315,6 +320,7 @@ struct Code {
         CodeVar        var;
         CodeFmt        fmt;
         CodeLabel      label;
+        CodeLoop       loop;
         loc_t          loc;
     };
 
@@ -367,10 +373,27 @@ inline Code *new_code(code_alc_t &alc, CodeKind kind)
     return x;
 }
 
+inline Code *code_var(code_alc_t &alc, const char *type, const char *name, const char *init)
+{
+    Code *x = new_code(alc, CODE_VAR);
+    x->var.type = type;
+    x->var.name = name;
+    x->var.init = init;
+    return x;
+}
+
 inline Code *code_stmt(code_alc_t &alc, const char *text)
 {
     Code *x = new_code(alc, CODE_STMT);
     x->text = text;
+    return x;
+}
+
+inline Code *code_loop(code_alc_t &alc, const char *label, CodeList *body)
+{
+    Code *x = new_code(alc, CODE_LOOP);
+    x->loop.label = label;
+    x->loop.body = body;
     return x;
 }
 

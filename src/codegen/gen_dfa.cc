@@ -40,7 +40,9 @@ static void emit_state(Output &output, const State *s, CodeList *stmts)
     Scratchbuf &o = output.scratchbuf;
     const char *text;
 
-    append(stmts, code_nlabel(alc, s->label));
+    if (!opts->loop_switch) {
+        append(stmts, code_nlabel(alc, s->label));
+    }
 
     if (opts->dFlag && (s->action.type != Action::INITIAL)) {
         text = o.str(opts->yydebug).cstr("(").label(*s->label).cstr(", ")
@@ -67,10 +69,26 @@ void DFA::emit_body(Output &output, CodeList *stmts) const
         append(stmts, code_stmt(alc, text));
     }
 
-    for (State * s = head; s; s = s->next) {
-        emit_state(output, s, stmts);
-        emit_action(output, *this, s, stmts);
-        gen_go(output, *this, &s->go, s, stmts);
+    if (!opts->loop_switch) {
+        for (State * s = head; s; s = s->next) {
+            emit_state(output, s, stmts);
+            emit_action(output, *this, s, stmts);
+            gen_go(output, *this, &s->go, s, stmts);
+        }
+    } else {
+        CodeCases *cases = code_cases(alc);
+        for (State * s = head; s; s = s->next) {
+            CodeList *body = code_list(alc);
+            emit_state(output, s, body);
+            emit_action(output, *this, s, body);
+            gen_go(output, *this, &s->go, s, body);
+            // TODO this cast safe? (s->label->index is unsigned int)
+            append(cases, code_case_number(alc, body, static_cast<int32_t>(s->label->index)));
+        }
+        // TODO configuration, language
+        CodeList* loop = code_list(alc);
+        append(loop, code_switch(alc, "yystate", cases));
+        append(stmts, code_loop(alc, "yyloop", loop));
     }
 }
 
@@ -219,6 +237,11 @@ void gen_code(Output &output, dfas_t &dfas)
             if (first && !opts->fFlag) {
                 append(program1, code_yych_decl(alc));
                 append(program1, code_yyaccept_def(alc));
+                if (opts->loop_switch) {
+                    text = o.u32(dfa.initial_label->index).flush();
+                    // TODO configuration
+                    append(program1, code_var(alc, "unsigned int", "yystate", text));
+                }
             }
 
             if (!is_cond_block && bms) {

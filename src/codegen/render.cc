@@ -334,6 +334,25 @@ static void render_func(RenderContext &rctx, const CodeFunc *func)
     ++rctx.line;
 }
 
+static void render_loop(RenderContext &rctx, const CodeLoop *loop)
+{
+    std::ostringstream &os = rctx.os;
+    const opt_t *opts = rctx.opts;
+
+    os << loop->label << ":" << std::endl;
+    ++rctx.line;
+
+    os << indent(rctx.ind, opts->indString) << "{" << std::endl;
+    ++rctx.line;
+
+    ++rctx.ind;
+    render_list(rctx, loop->body);
+    --rctx.ind;
+
+    os << indent(rctx.ind, opts->indString) << "}" << std::endl;
+    ++rctx.line;
+}
+
 static inline void yych_conv(std::ostream &os, const opt_t *opts)
 {
     if (opts->yychConversion) {
@@ -508,6 +527,9 @@ void render(RenderContext &rctx, const Code *code)
             break;
         case CODE_FUNC:
             render_func(rctx, &code->func);
+            break;
+        case CODE_LOOP:
+            render_loop(rctx, &code->loop);
             break;
         case CODE_TEXT_RAW:
             os << code->text << std::endl;

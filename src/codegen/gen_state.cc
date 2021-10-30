@@ -475,8 +475,15 @@ void gen_goto(Output &output, const DFA &dfa, CodeList *stmts, const State *from
 
     if (!jump.elide) {
         jump.to->label->used = true;
-        text = o.cstr("goto ").str(opts->labelPrefix).label(*jump.to->label).flush();
-        append(stmts, code_stmt(alc, text));
+        if (!opts->loop_switch) {
+            text = o.cstr("goto ").str(opts->labelPrefix).label(*jump.to->label).flush();
+            append(stmts, code_stmt(alc, text));
+        } else {
+            // TODO configurations
+            text = o.cstr("yystate = ").label(*jump.to->label).flush();
+            append(stmts, code_stmt(alc, text));
+            append(stmts, code_stmt(alc, "goto yyloop"));
+        }
     }
     else {
         // Goto can be elided, because control flow "falls through" to the
