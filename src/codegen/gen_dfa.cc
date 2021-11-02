@@ -64,30 +64,36 @@ void DFA::emit_body(Output &output, CodeList *stmts) const
     // has a piece of code that advances input position. Wee must
     // skip it when entering DFA.
     if (head->label->used) {
-        initial_label->used = true;
-        text = o.cstr("goto ").str(opts->labelPrefix).label(*initial_label).flush();
-        append(stmts, code_stmt(alc, text));
+        if (!opts->loop_switch) {
+            initial_label->used = true;
+            text = o.cstr("goto ").str(opts->labelPrefix).label(*initial_label).flush();
+            append(stmts, code_stmt(alc, text));
+        } else {
+            emit_action(output, *this, head, stmts, true);
+            gen_go(output, *this, &head->go, head, stmts);
+        }
     }
 
     if (!opts->loop_switch) {
         for (State * s = head; s; s = s->next) {
             emit_state(output, s, stmts);
-            emit_action(output, *this, s, stmts);
+            emit_action(output, *this, s, stmts, false);
             gen_go(output, *this, &s->go, s, stmts);
         }
     } else {
+        CodeList* loop = code_list(alc);
         CodeCases *cases = code_cases(alc);
         for (State * s = head; s; s = s->next) {
             CodeList *body = code_list(alc);
             emit_state(output, s, body);
-            emit_action(output, *this, s, body);
+            emit_action(output, *this, s, body, false);
             gen_go(output, *this, &s->go, s, body);
             // TODO this cast safe? (s->label->index is unsigned int)
             append(cases, code_case_number(alc, body, static_cast<int32_t>(s->label->index)));
         }
         // TODO configuration, language
-        CodeList* loop = code_list(alc);
         append(loop, code_switch(alc, "yystate", cases));
+        append(loop, code_stmt(alc, "assert(0)"));
         append(stmts, code_loop(alc, "yyloop", loop));
     }
 }

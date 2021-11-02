@@ -40,7 +40,7 @@ static const char *gen_fill_label(Output &output, uint32_t index)
     return o.str(opts->yyfilllabel).u32(index).flush();
 }
 
-void emit_action(Output &output, const DFA &dfa, const State *s, CodeList *stmts)
+void emit_action(Output &output, const DFA &dfa, const State *s, CodeList *stmts, bool skip_initial_advance)
 {
     const opt_t *opts = output.block().opts;
     code_alc_t &alc = output.allocator;
@@ -62,14 +62,16 @@ void emit_action(Output &output, const DFA &dfa, const State *s, CodeList *stmts
         const bool backup = save != NOSAVE;
         const bool ul1 = s->label->used;
 
-        if (ul1 && dfa.accepts.size() > 1 && backup) {
-            text = o.str(opts->yyaccept).cstr(" = ").u64(save).flush();
-            append(stmts, code_stmt(alc, text));
+        if (!skip_initial_advance) {
+            if (ul1 && dfa.accepts.size() > 1 && backup) {
+                text = o.str(opts->yyaccept).cstr(" = ").u64(save).flush();
+                append(stmts, code_stmt(alc, text));
+            }
+            if (ul1 && !opts->eager_skip) {
+                append(stmts, code_skip(alc));
+            }
+            append(stmts, code_nlabel(alc, dfa.initial_label));
         }
-        if (ul1 && !opts->eager_skip) {
-            append(stmts, code_skip(alc));
-        }
-        append(stmts, code_nlabel(alc, dfa.initial_label));
         if (opts->dFlag) {
             text = o.str(opts->yydebug).cstr("(").label(*dfa.initial_label)
                 .cstr(", *").str(opts->yycursor).cstr(")").flush();
@@ -330,8 +332,14 @@ static CodeList *gen_fill_falllback(Output &output, const DFA &dfa,
 
         // go to fallback state
         fallback->label->used = true;
-        append(fallback_trans, code_stmt(alc, output.scratchbuf.cstr("goto ")
-            .str(opts->labelPrefix).label(*fallback->label).flush()));
+        if (!opts->loop_switch) {
+            append(fallback_trans, code_stmt(alc, output.scratchbuf.cstr("goto ")
+                .str(opts->labelPrefix).label(*fallback->label).flush()));
+        } else {
+            append(fallback_trans, code_stmt(alc, output.scratchbuf.cstr("yystate = ")
+                .label(*fallback->label).flush()));
+            append(fallback_trans, code_stmt(alc, "goto yyloop"));
+        }
     }
     else {
         // Transition can be elided, because control flow "falls through" to an

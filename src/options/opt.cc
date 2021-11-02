@@ -310,6 +310,10 @@ static void fix_mutopt(const conopt_t &glob, const mutopt_t &defaults,
         error("storable state requires YYFILL to be enabled");
         exit(1);
     }
+    if (real.loop_switch && real.gFlag) {
+        error("cannot combine loop switch and computed gotos");
+        exit(1);
+    }
 }
 
 Opt::Opt(const conopt_t &globopts)

@@ -762,7 +762,7 @@ CodeList *gen_bitmap(Output &output, const CodeBitmap *bitmap);
 void gen_go(Output &output, const DFA &dfa, const CodeGo *go, const State *from,
     CodeList *stmts);
 void gen_tags(Scratchbuf &buf, const opt_t *opts, Code *code, const tagnames_t &tags);
-void emit_action(Output &output, const DFA &dfa, const State *s, CodeList *stmts);
+void emit_action(Output &output, const DFA &dfa, const State *s, CodeList *stmts, bool skip_initial_advance);
 void gen_settags(Output &output, CodeList *tag_actions, const DFA &dfa, tcid_t tcid,
     bool delayed);
 void gen_goto(Output &output, const DFA &dfa, CodeList *stmts, const State *from,
