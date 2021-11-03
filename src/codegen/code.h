@@ -704,7 +704,7 @@ struct OutputBlock {
     Label *start_label;        // label of the DFA start state
     uint32_t fill_index_start; // start of YYFILL index range
     uint32_t fill_index_end;   // end of YYFILL index range (not included)
-    std::vector<CodeList*> fill_goto; // transitions to YYFILL states
+    std::map<uint32_t, CodeList*> fill_goto; // transitions to YYFILL states
 
     OutputBlock(InputBlockKind kind, const std::string &name, const loc_t &loc);
     ~OutputBlock();

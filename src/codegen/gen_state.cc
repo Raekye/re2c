@@ -364,8 +364,13 @@ static void gen_fill(Output &output, CodeList *stmts, const DFA &dfa,
 
     // Transition to YYFILL label from the initial state dispatch.
     CodeList *goto_fill = code_list(alc);
-    const char *flabel = gen_fill_label(output, fillidx);
-    append(goto_fill, code_stmt(alc, o.cstr("goto ").cstr(flabel).flush()));
+    if (opts->loop_switch) {
+        append(goto_fill, code_stmt(alc, o.cstr("yystate = ").u64(fillidx).flush()));
+        append(goto_fill, code_stmt(alc, "goto yyloop"));
+    } else {
+        const char *flabel = gen_fill_label(output, fillidx);
+        append(goto_fill, code_stmt(alc, o.cstr("goto ").cstr(flabel).flush()));
+    }
 
     CodeList *fill = code_list(alc);
 
@@ -415,7 +420,7 @@ static void gen_fill(Output &output, CodeList *stmts, const DFA &dfa,
         }
     }
     if (opts->fFlag) {
-        output.block().fill_goto.push_back(goto_fill);
+        output.block().fill_goto[fillidx] = goto_fill;
     }
 
     if (opts->fill_check && fill->head) {
@@ -437,7 +442,11 @@ void gen_fill_and_label(Output &output, CodeList *stmts, const DFA &dfa, const S
     const bool need_fill_label = need_fill_on_trans || (need_fill_in_state && opts->fFlag);
 
     if (need_fill_label) {
-        ++output.block().fill_index_end;
+        if (opts->loop_switch) {
+            output.block().fill_index_end = s->label->index + 1;
+        } else {
+            ++output.block().fill_index_end;
+        }
     }
 
     if (need_fill_in_state) {
@@ -453,7 +462,7 @@ void gen_fill_and_label(Output &output, CodeList *stmts, const DFA &dfa, const S
         gen_settags(output, stmts, dfa, s->go.tags, opts->stadfa /* delayed */);
     }
 
-    if (need_fill_label) {
+    if (need_fill_label && !opts->loop_switch) {
         const char *flabel = gen_fill_label(output, output.block().fill_index_end - 1);
         append(stmts, code_slabel(output.allocator, flabel));
     }

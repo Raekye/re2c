@@ -176,12 +176,10 @@ static void gen_state_goto_cases(CodegenCtxPass1 &ctx, CodeCases *cases,
 {
     code_alc_t &alc = ctx.global->allocator;
 
-    uint32_t index_count = block->fill_index_end - block->fill_index_start;
-    DASSERT(index_count <= block->fill_goto.size());
-
-    for (uint32_t i = 0; i < index_count; ++i) {
-        append(cases, code_case_number(alc, block->fill_goto[i],
-            static_cast<int32_t>(i + block->fill_index_start)));
+    std::map<uint32_t, CodeList*>::const_iterator
+        i = block->fill_goto.begin(), e = block->fill_goto.end();
+    for (; i != e; ++i) {
+        append(cases, code_case_number(alc, i->second, static_cast<int32_t>(i->first)));
     }
 }
 

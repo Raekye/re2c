@@ -16,10 +16,6 @@ static void fix_conopt(conopt_t &glob)
         glob.iFlag = true;
     }
 
-    if (!glob.lookahead) {
-        glob.eager_skip = true;
-    }
-
     // append directory separator '/' to all paths that do not have it
     for (size_t i = 0; i < glob.incpaths.size(); ++i) {
         std::string &p = glob.incpaths[i];
@@ -313,6 +309,9 @@ static void fix_mutopt(const conopt_t &glob, const mutopt_t &defaults,
     if (real.loop_switch && real.gFlag) {
         error("cannot combine loop switch and computed gotos");
         exit(1);
+    }
+    if (!glob.lookahead || (real.loop_switch && real.fill_use && (glob.fFlag || real.eof != NOEOF))) {
+        real.eager_skip = true;
     }
 }
 
