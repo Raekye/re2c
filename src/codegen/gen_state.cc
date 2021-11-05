@@ -338,7 +338,7 @@ static CodeList *gen_fill_falllback(Output &output, const DFA &dfa,
         } else {
             append(fallback_trans, code_stmt(alc, output.scratchbuf.cstr("yystate = ")
                 .label(*fallback->label).flush()));
-            append(fallback_trans, code_stmt(alc, "goto yyloop"));
+            append(fallback_trans, code_stmt(alc, "continue"));
         }
     }
     else {
@@ -366,7 +366,7 @@ static void gen_fill(Output &output, CodeList *stmts, const DFA &dfa,
     CodeList *goto_fill = code_list(alc);
     if (opts->loop_switch) {
         append(goto_fill, code_stmt(alc, o.cstr("yystate = ").u64(fillidx).flush()));
-        append(goto_fill, code_stmt(alc, "goto yyloop"));
+        append(goto_fill, code_stmt(alc, "continue"));
     } else {
         const char *flabel = gen_fill_label(output, fillidx);
         append(goto_fill, code_stmt(alc, o.cstr("goto ").cstr(flabel).flush()));
@@ -499,7 +499,7 @@ void gen_goto(Output &output, const DFA &dfa, CodeList *stmts, const State *from
             // TODO configurations
             text = o.cstr("yystate = ").label(*jump.to->label).flush();
             append(stmts, code_stmt(alc, text));
-            append(stmts, code_stmt(alc, "goto yyloop"));
+            append(stmts, code_stmt(alc, "continue"));
         }
     }
     else {

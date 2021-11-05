@@ -310,7 +310,11 @@ static void fix_mutopt(const conopt_t &glob, const mutopt_t &defaults,
         error("cannot combine loop switch and computed gotos");
         exit(1);
     }
-    if (!glob.lookahead || (real.loop_switch && real.fill_use && (glob.fFlag || real.eof != NOEOF))) {
+    //if (!glob.lookahead || (real.loop_switch && real.fill_use && (glob.fFlag || real.eof != NOEOF))) {
+    if (!glob.lookahead || real.loop_switch) {
+        // for loop-switch enable eager-skip always (not only in cases when
+        // YYFILL labels are use) to avoid special handling of initial state
+        // when there are transitions into it.
         real.eager_skip = true;
     }
 }

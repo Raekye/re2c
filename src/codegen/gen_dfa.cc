@@ -69,8 +69,8 @@ void DFA::emit_body(Output &output, CodeList *stmts) const
             text = o.cstr("goto ").str(opts->labelPrefix).label(*initial_label).flush();
             append(stmts, code_stmt(alc, text));
         } else {
-            emit_action(output, *this, head, stmts, true);
-            gen_go(output, *this, &head->go, head, stmts);
+            // With eager-skip there is no YYSKIP to bypass in the initial state.
+            DASSERT(opts->eager_skip);
         }
     }
 
@@ -93,8 +93,7 @@ void DFA::emit_body(Output &output, CodeList *stmts) const
         }
         // TODO configuration, language
         append(loop, code_switch(alc, "yystate", cases));
-        append(loop, code_stmt(alc, "assert(0)"));
-        append(stmts, code_loop(alc, "yyloop", loop));
+        append(stmts, code_loop(alc, loop));
     }
 }
 

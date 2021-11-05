@@ -304,8 +304,7 @@ struct CodeLabel {
 };
 
 struct CodeLoop {
-    const char *label;
-    CodeList   *body;
+    CodeList *body;
 };
 
 struct Code {
@@ -389,10 +388,9 @@ inline Code *code_stmt(code_alc_t &alc, const char *text)
     return x;
 }
 
-inline Code *code_loop(code_alc_t &alc, const char *label, CodeList *body)
+inline Code *code_loop(code_alc_t &alc, CodeList *body)
 {
     Code *x = new_code(alc, CODE_LOOP);
-    x->loop.label = label;
     x->loop.body = body;
     return x;
 }

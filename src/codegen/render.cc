@@ -339,10 +339,7 @@ static void render_loop(RenderContext &rctx, const CodeLoop *loop)
     std::ostringstream &os = rctx.os;
     const opt_t *opts = rctx.opts;
 
-    os << loop->label << ":" << std::endl;
-    ++rctx.line;
-
-    os << indent(rctx.ind, opts->indString) << "{" << std::endl;
+    os << indent(rctx.ind, opts->indString) << "for (;;) {" << std::endl;
     ++rctx.line;
 
     ++rctx.ind;
